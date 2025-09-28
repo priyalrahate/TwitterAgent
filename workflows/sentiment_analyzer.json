@@ -1,0 +1,81 @@
+{
+  "name": "Sentiment Analyzer",
+  "description": "Analyze sentiment around specific topics or brands",
+  "version": "1.0.0",
+  "type": "on_demand",
+  "parameters": {
+    "topic": "{{topic}}",
+    "timeframe": "{{timeframe}}",
+    "max_tweets": 500,
+    "sentiment_threshold": 0.6
+  },
+  "steps": [
+    {
+      "id": "search_tweets",
+      "action": "search_tweets",
+      "parameters": {
+        "query": "{{topic}}",
+        "max_results": "{{max_tweets}}",
+        "time_range": "{{timeframe}}"
+      },
+      "description": "Search for tweets about the topic"
+    },
+    {
+      "id": "analyze_sentiment",
+      "action": "analyze_sentiment",
+      "parameters": {
+        "tweets": "{{search_tweets.result}}",
+        "detailed": true
+      },
+      "description": "Perform detailed sentiment analysis"
+    },
+    {
+      "id": "identify_themes",
+      "action": "extract_themes",
+      "parameters": {
+        "tweets": "{{search_tweets.result}}",
+        "sentiment_data": "{{analyze_sentiment.result}}"
+      },
+      "description": "Identify key themes and topics"
+    },
+    {
+      "id": "generate_insights",
+      "action": "generate_insights",
+      "parameters": {
+        "sentiment_analysis": "{{analyze_sentiment.result}}",
+        "themes": "{{identify_themes.result}}",
+        "topic": "{{topic}}"
+      },
+      "description": "Generate actionable insights"
+    }
+  ],
+  "output": {
+    "format": "json",
+    "fields": [
+      "topic",
+      "timeframe",
+      "total_tweets",
+      "sentiment_distribution",
+      "key_themes",
+      "insights",
+      "recommendations"
+    ]
+  },
+  "alerts": {
+    "enabled": true,
+    "conditions": [
+      {
+        "field": "sentiment.negative",
+        "operator": ">",
+        "value": "{{sentiment_threshold}}",
+        "message": "High negative sentiment detected for {{topic}}"
+      },
+      {
+        "field": "sentiment.positive",
+        "operator": ">",
+        "value": "{{sentiment_threshold}}",
+        "message": "High positive sentiment detected for {{topic}}"
+      }
+    ]
+  }
+}

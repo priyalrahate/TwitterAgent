@@ -1,0 +1,81 @@
+{
+  "name": "User Monitor",
+  "description": "Monitor specific users for new tweets and engagement",
+  "version": "1.0.0",
+  "type": "recurring",
+  "schedule": {
+    "interval": 1800,
+    "max_runs": null
+  },
+  "parameters": {
+    "users": ["elonmusk", "naval", "balajis"],
+    "keywords": ["AI", "crypto", "startup"],
+    "min_engagement": 1000
+  },
+  "steps": [
+    {
+      "id": "get_user_timeline",
+      "action": "get_user_timeline",
+      "parameters": {
+        "username": "{{user}}",
+        "max_results": 50
+      },
+      "description": "Get recent tweets from monitored user"
+    },
+    {
+      "id": "filter_tweets",
+      "action": "filter_tweets",
+      "parameters": {
+        "tweets": "{{get_user_timeline.result}}",
+        "keywords": "{{keywords}}",
+        "min_engagement": "{{min_engagement}}"
+      },
+      "description": "Filter tweets by keywords and engagement"
+    },
+    {
+      "id": "analyze_content",
+      "action": "analyze_sentiment",
+      "parameters": {
+        "tweets": "{{filter_tweets.result}}"
+      },
+      "description": "Analyze sentiment and content themes"
+    },
+    {
+      "id": "bookmark_important",
+      "action": "bookmark_tweet",
+      "parameters": {
+        "tweet_id": "{{filter_tweets.result.high_engagement_tweets}}"
+      },
+      "description": "Bookmark high-engagement tweets",
+      "condition": "{{filter_tweets.result.high_engagement_count}} > 0"
+    }
+  ],
+  "output": {
+    "format": "json",
+    "fields": [
+      "user",
+      "new_tweets",
+      "filtered_tweets",
+      "sentiment_analysis",
+      "bookmarked_tweets"
+    ]
+  },
+  "notifications": {
+    "enabled": true,
+    "channels": ["webhook", "slack"],
+    "conditions": [
+      {
+        "field": "new_tweets",
+        "operator": ">",
+        "value": 0,
+        "message": "New tweets from @{{user}}"
+      },
+      {
+        "field": "high_engagement_tweets",
+        "operator": ">",
+        "value": 0,
+        "message": "High engagement tweet from @{{user}}"
+      }
+    ]
+  }
+}

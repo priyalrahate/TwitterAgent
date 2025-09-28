@@ -1,0 +1,79 @@
+{
+  "name": "Engagement Booster",
+  "description": "Automatically boost engagement on your tweets",
+  "version": "1.0.0",
+  "type": "recurring",
+  "schedule": {
+    "interval": 900,
+    "max_runs": null
+  },
+  "parameters": {
+    "username": "{{username}}",
+    "min_engagement_threshold": 50,
+    "boost_delay": 300,
+    "max_boosts_per_day": 10
+  },
+  "steps": [
+    {
+      "id": "get_my_tweets",
+      "action": "get_user_timeline",
+      "parameters": {
+        "username": "{{username}}",
+        "max_results": 20,
+        "time_range": "24h"
+      },
+      "description": "Get recent tweets from your account"
+    },
+    {
+      "id": "check_engagement",
+      "action": "check_engagement",
+      "parameters": {
+        "tweets": "{{get_my_tweets.result}}",
+        "threshold": "{{min_engagement_threshold}}"
+      },
+      "description": "Check which tweets need engagement boost"
+    },
+    {
+      "id": "find_boost_candidates",
+      "action": "find_boost_candidates",
+      "parameters": {
+        "low_engagement_tweets": "{{check_engagement.result}}",
+        "max_candidates": "{{max_boosts_per_day}}"
+      },
+      "description": "Find tweets that need boosting"
+    },
+    {
+      "id": "schedule_boosts",
+      "action": "schedule_boosts",
+      "parameters": {
+        "tweets": "{{find_boost_candidates.result}}",
+        "delay": "{{boost_delay}}",
+        "boost_type": "retweet"
+      },
+      "description": "Schedule engagement boosts",
+      "condition": "{{find_boost_candidates.result.count}} > 0"
+    }
+  ],
+  "output": {
+    "format": "json",
+    "fields": [
+      "username",
+      "tweets_checked",
+      "low_engagement_count",
+      "boosts_scheduled",
+      "boost_strategy"
+    ]
+  },
+  "notifications": {
+    "enabled": true,
+    "channels": ["webhook"],
+    "conditions": [
+      {
+        "field": "boosts_scheduled",
+        "operator": ">",
+        "value": 0,
+        "message": "Engagement boosts scheduled for {{boosts_scheduled}} tweets"
+      }
+    ]
+  }
+}

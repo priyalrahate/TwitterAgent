@@ -1,0 +1,66 @@
+{
+  "name": "Trend Monitor",
+  "description": "Monitor trending topics and analyze sentiment",
+  "version": "1.0.0",
+  "type": "recurring",
+  "schedule": {
+    "interval": 3600,
+    "max_runs": null
+  },
+  "parameters": {
+    "topics": ["Bitcoin", "Ethereum", "AI", "Web3"],
+    "max_tweets_per_topic": 100,
+    "timeframe": "24h"
+  },
+  "steps": [
+    {
+      "id": "search_trends",
+      "action": "search_tweets",
+      "parameters": {
+        "query": "{{topic}}",
+        "max_results": "{{max_tweets_per_topic}}",
+        "time_range": "{{timeframe}}"
+      },
+      "description": "Search for tweets about trending topics"
+    },
+    {
+      "id": "analyze_sentiment",
+      "action": "analyze_sentiment",
+      "parameters": {
+        "tweets": "{{search_trends.result}}"
+      },
+      "description": "Analyze sentiment of found tweets"
+    },
+    {
+      "id": "generate_report",
+      "action": "generate_report",
+      "parameters": {
+        "analysis": "{{analyze_sentiment.result}}",
+        "topic": "{{topic}}"
+      },
+      "description": "Generate trend analysis report"
+    }
+  ],
+  "output": {
+    "format": "json",
+    "fields": [
+      "topic",
+      "tweet_count",
+      "sentiment_breakdown",
+      "top_hashtags",
+      "key_insights"
+    ]
+  },
+  "notifications": {
+    "enabled": true,
+    "channels": ["email", "webhook"],
+    "conditions": [
+      {
+        "field": "sentiment.negative",
+        "operator": ">",
+        "value": 0.7,
+        "message": "High negative sentiment detected for {{topic}}"
+      }
+    ]
+  }
+}

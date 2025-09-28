@@ -1,0 +1,90 @@
+{
+  "name": "Content Curator",
+  "description": "Curate and share relevant content based on topics of interest",
+  "version": "1.0.0",
+  "type": "recurring",
+  "schedule": {
+    "interval": 7200,
+    "max_runs": null
+  },
+  "parameters": {
+    "topics": ["AI", "Machine Learning", "Data Science"],
+    "sources": ["verified", "influencers"],
+    "min_quality_score": 0.7,
+    "max_posts_per_day": 5
+  },
+  "steps": [
+    {
+      "id": "search_content",
+      "action": "search_tweets",
+      "parameters": {
+        "query": "{{topic}} -is:retweet -is:reply",
+        "max_results": 200,
+        "time_range": "24h"
+      },
+      "description": "Search for original content about topics"
+    },
+    {
+      "id": "filter_quality",
+      "action": "filter_tweets",
+      "parameters": {
+        "tweets": "{{search_content.result}}",
+        "min_engagement": 100,
+        "verified_only": "{{sources.verified}}",
+        "quality_score": "{{min_quality_score}}"
+      },
+      "description": "Filter tweets by quality and engagement"
+    },
+    {
+      "id": "analyze_content",
+      "action": "analyze_sentiment",
+      "parameters": {
+        "tweets": "{{filter_quality.result}}"
+      },
+      "description": "Analyze content quality and sentiment"
+    },
+    {
+      "id": "rank_content",
+      "action": "rank_tweets",
+      "parameters": {
+        "tweets": "{{analyze_content.result}}",
+        "criteria": ["engagement", "sentiment", "relevance"],
+        "top_n": 10
+      },
+      "description": "Rank tweets by quality criteria"
+    },
+    {
+      "id": "schedule_shares",
+      "action": "schedule_posts",
+      "parameters": {
+        "tweets": "{{rank_content.result}}",
+        "max_posts": "{{max_posts_per_day}}",
+        "schedule_spacing": 14400
+      },
+      "description": "Schedule curated content for sharing",
+      "condition": "{{rank_content.result.count}} > 0"
+    }
+  ],
+  "output": {
+    "format": "json",
+    "fields": [
+      "topic",
+      "curated_count",
+      "scheduled_posts",
+      "quality_metrics",
+      "engagement_predictions"
+    ]
+  },
+  "notifications": {
+    "enabled": true,
+    "channels": ["email"],
+    "conditions": [
+      {
+        "field": "curated_count",
+        "operator": ">",
+        "value": 0,
+        "message": "New content curated for {{topic}}"
+      }
+    ]
+  }
+}
